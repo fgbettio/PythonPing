@@ -6,15 +6,17 @@ Created on Mon Jan 17 09:28:24 2022
 """
 #Links:
     #Para gerar executável - https://www.hashtagtreinamentos.com/arquivo-executavel-python?gclid=CjwKCAiA55mPBhBOEiwANmzoQmfQSfSvp4T7iT5L2D-Oq2gSccdTHG6MbVi-q_vGN4EIWGtrKWMnCRoCVUEQAvD_BwE
-  
+    #Configurações do grafico - https://www.geeksforgeeks.org/matplotlib-axes-axes-set_adjustable-in-python/
+    #Grid - https://www.southampton.ac.uk/~feeg1001/notebooks/Matplotlib.html
+    #Exemplo de código usnado matplotlib com botão de zoom - https://qastack.com.br/programming/11874767/how-do-i-plot-in-real-time-in-a-while-loop-using-matplotlib
+    
+    
 import sys
-import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import functools
+
 import numpy as np
-import random as rd
 import matplotlib
 matplotlib.use("Qt5Agg")
 from matplotlib.figure import Figure
@@ -26,6 +28,8 @@ import threading
 
 import subprocess
 import platform,re
+
+val =0
 
 def Ping(hostname,timeout):
     #print('Pingando...')
@@ -51,15 +55,12 @@ def Ping(hostname,timeout):
 #==============================================================================
 #val=Ping('www.google.com.br',3)
 
-
-
-
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
         # Define the geometry of the main window
         self.setGeometry(300, 300, 800, 400)
-        self.setWindowTitle("Python Ping (www.google.com.br)")
+        self.setWindowTitle("Python Ping")
         # Create FRAME_A
         self.FRAME_A = QFrame(self)
         self.FRAME_A.setStyleSheet("QWidget { background-color: %s }" % QColor(210,210,235,255).name())
@@ -77,12 +78,10 @@ class CustomMainWindow(QMainWindow):
         # Add the callbackfunc to ..
         myDataLoop = threading.Thread(name = 'myDataLoop', target = dataSendLoop, daemon = True, args = (self.addData_callbackFunc,))
         myDataLoop.start()
+        #self.labelText.setText("123");
+        #self.text.
+        
         self.show()
-        return
-
-    def zoomBtnAction(self):
-        print("zoom in")
-        self.myFig.zoomIn(5)
         return
 
     def addData_callbackFunc(self, value):
@@ -96,7 +95,7 @@ class CustomMainWindow(QMainWindow):
 class CustomFigCanvas(FigureCanvas, TimedAnimation):
     def __init__(self):
         self.addedData = []
-        print(matplotlib.__version__)
+        print("Versão do Matplotlib: "+matplotlib.__version__)
         # The data
         self.xlim = 200
         self.n = np.linspace(0, self.xlim - 1, self.xlim)
@@ -106,6 +105,7 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
         self.fig = Figure(figsize=(5,5), dpi=100)
         self.ax1 = self.fig.add_subplot(111)
         # self.ax1 settings
+        self.ax1.set_title("Python Ping - www.google.com.br")
         self.ax1.set_xlabel('tempo')
         self.ax1.set_ylabel('ping (ms)')
         self.line1 = Line2D([], [], color='blue')
@@ -116,6 +116,9 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
         self.ax1.add_line(self.line1_head)
         self.ax1.set_xlim(0, self.xlim - 1)
         self.ax1.set_ylim(0, 1000)
+        self.ax1.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
+        #self.ax1.annotate(val, (0,0), (0,0), 'data', None, None, None)
+        #self.ax1.text(0, 0, r"$y=x^2$", fontsize=20, color="blue")
         FigureCanvas.__init__(self, self.fig)
         TimedAnimation.__init__(self, self.fig, interval = 50, blit = True)
         return
@@ -131,15 +134,6 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
 
     def addData(self, value):
         self.addedData.append(value)
-        return
-
-    def zoomIn(self, value):
-        bottom = self.ax1.get_ylim()[0]
-        top = self.ax1.get_ylim()[1]
-        bottom += value
-        top -= value
-        self.ax1.set_ylim(bottom,top)
-        self.draw()
         return
 
     def _step(self, *args):
@@ -184,15 +178,13 @@ def dataSendLoop(addData_callbackFunc):
     # Setup the signal-slot mechanism.
     mySrc = Communicate()
     mySrc.data_signal.connect(addData_callbackFunc)
-
-    n = np.linspace(0, 499, 500)
     i = 0
 
     while(True):
         if(i > 499):
             i = 0
         #time.sleep(0.1)
-        val=Ping('www.google.com.br',3)
+        val=(Ping('www.google.com.br',3))
         #print(val)
         mySrc.data_signal.emit(val) # <- Here you emit a signal!
         i += 1
@@ -200,6 +192,7 @@ def dataSendLoop(addData_callbackFunc):
 ###
 
 if __name__== '__main__':
+    print("Ininiando...")
     app = QApplication(sys.argv)
     QApplication.setStyle(QStyleFactory.create('Plastique'))
     myGUI = CustomMainWindow()
